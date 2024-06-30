@@ -22,7 +22,7 @@ jobs:
           java-version: '17'
 
       - name: Build with gradle
-        run: ./gradle clan build
+        run: ./gradlew clan build
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
