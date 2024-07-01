@@ -11,11 +11,15 @@ public class ProductController
     private IProductService productService;
     //mapping the getProduct() method to /product
     @GetMapping(value = "/product")
-    public List<Product> getProduct()
-    {
+    public List<Product> getProduct() {
 //finds all the products
         List<Product> products = productService.findAll();
 //returns the product list
         return products;
+    }
+
+    @GetMapping(value = "/name")
+    public String getName() {
+        return "another end pint hit";
     }
 }
