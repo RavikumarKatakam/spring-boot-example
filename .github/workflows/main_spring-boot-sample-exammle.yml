@@ -30,11 +30,18 @@ jobs:
       - name: Build with gradle
         run: ./gradlew clean build
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
         with:
-          name: java-app
-          path: '${{ github.workspace }}/build/libs/demo-0.0.1-SNAPSHOT.jar'
+          login-server: ${{ secrets.ACR_REGISTRY_NAME }}.azurecr.io
+          username: ${{ secrets.AZ_SP_CLIENT_ID }}
+          password: ${{ secrets.AZ_SP_CLIENT_SECRET }}
+
+      - name: Build and push image to ACR
+        run: |
+          docker build . -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} -f Dockerfile
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+      
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,19 +62,6 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-
-      - name: Login to Azure Container Registry
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ secrets.ACR_REGISTRY_NAME }}.azurecr.io
-          username: ${{ secrets.AZ_SP_CLIENT_ID }}
-          password: ${{ secrets.AZ_SP_CLIENT_SECRET }}
-
-      - name: Build and push image to ACR
-        run: |
-          docker build . -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
-          docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v1
