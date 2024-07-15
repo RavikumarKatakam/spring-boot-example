@@ -9,6 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  CONTAINER_NAME: spring-boot-example
+  AZURE_CONTAINER_REGISTRY: springbootdockerimages.azurecr.io
+  CLUSTER_NAME: myAKSCluster
+  RESOURCE_GROUP: myresource-rg
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,11 +58,23 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6F31D054F7B547B8842254874A879F97 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0CEDC1710A91407888905D6764C6FA20 }}
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
+      - name: Login to ACR
+        uses: azure/docker-login@v1
         with:
-          app-name: 'spring-boot-sample-exammle'
-          slot-name: 'Production'
-          package: '*.jar'
+          login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push image to ACR
+        run: |
+          docker build . -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v1
+
+      - name: Deploy to AKS
+        run: |
+          az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }}
+          kubectl set image deployment/${{ env.CONTAINER_NAME }} ${{ env.CONTAINER_NAME }}=${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
           
