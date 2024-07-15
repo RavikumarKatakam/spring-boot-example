@@ -54,16 +54,7 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_28471AA087EA433CA8A4046158B33A6D }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6F31D054F7B547B8842254874A879F97 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0CEDC1710A91407888905D6764C6FA20 }}
-
-      - name: Login to ACR
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Build and push image to ACR
         run: |
